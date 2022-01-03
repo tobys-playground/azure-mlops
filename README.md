@@ -2,7 +2,7 @@
 
 This is a MLOps pipeline to train and deploy an ALBERT model on Azure (MLOps maturity level 3).
 
-![image005](https://user-images.githubusercontent.com/81354022/147898753-60d369bb-0869-4bdf-88bd-90231fa86a13.jpg)
+![image005 (1)](https://user-images.githubusercontent.com/81354022/147899076-8a406133-e338-47f5-b278-2aea2347a2d1.jpg)
 
 ## Steps (Training):
 1) A code commit to the repository (either GitHub or Azure Repos) will trigger the pipeline
