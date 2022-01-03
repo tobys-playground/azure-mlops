@@ -1,0 +1,138 @@
+# Variable 'amlcompute.clusterName' was defined in the Variables tab
+# Variable 'amlcompute.idleSecondsBeforeScaledown' was defined in the Variables tab
+# Variable 'amlcompute.maxNodes' was defined in the Variables tab
+# Variable 'amlcompute.minNodes' was defined in the Variables tab
+# Variable 'amlcompute.vmPriority' was defined in the Variables tab
+# Variable 'amlcompute.vmSize' was defined in the Variables tab
+# Variable 'azureml.location' was defined in the Variables tab
+# Variable 'azureml.resourceGroup' was defined in the Variables tab
+# Variable 'azureml.subscription' was defined in the Variables tab
+# Variable 'azureml.workspaceName' was defined in the Variables tab
+# Variable 'experiment.name' was defined in the Variables tab
+# Variable 'model.name' was defined in the Variables tab
+jobs:
+- job: Job_1
+  displayName: Agent job 1
+  pool:
+    vmImage: ubuntu-20.04
+  steps:
+  - checkout: self
+#   - task: TerraformInstaller@0
+#     displayName: Install Terraform 1.0.4
+#     enabled: False
+#     inputs:
+#       terraformVersion: 1.0.4
+#   - task: TerraformTaskV2@2
+#     displayName: Terraform init
+#     enabled: False
+#     inputs:
+#       workingDirectory: terraform
+#       backendServiceArm: ServiceConnection2
+#       backendAzureRmResourceGroupName: tflogs
+#       backendAzureRmStorageAccountName: tflogsstorage
+#       backendAzureRmContainerName: vhds
+#       backendAzureRmKey: terraform.tfstate
+#   - task: TerraformTaskV2@2
+#     displayName: Terraform plan
+#     enabled: False
+#     inputs:
+#       workingDirectory: terraform
+#       backendServiceArm: ServiceConnection2
+#       backendAzureRmResourceGroupName: tflogs
+#       backendAzureRmStorageAccountName: tflogsstorage
+#       backendAzureRmContainerName: vhds
+#       backendAzureRmKey: terraform.tfstate
+#   - task: TerraformTaskV2@2
+#     displayName: Terraform apply
+#     enabled: False
+#     inputs:
+#       command: apply
+#       workingDirectory: terraform
+#       commandOptions: -lock=false
+#       environmentServiceNameAzureRM: ServiceConnection2
+  - task: UsePythonVersion@0
+    displayName: Use Python 3.8
+    inputs:
+      versionSpec: 3.8
+  - task: Bash@3
+    displayName: Install Requirements
+    inputs:
+      filePath: requirements/install_requirements.sh
+  - task: AzureCLI@2
+    displayName: 'Add Azure ML CLI'
+    inputs:
+      connectedServiceNameARM: ServiceConnection2
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: az extension add -n azure-cli-ml
+  - task: AzureCLI@2
+    displayName: Create Resource Group
+    inputs:
+      connectedServiceNameARM: ServiceConnection2
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: az group create -n $(azureml.resourceGroup) -l $(azureml.location)
+  - task: AzureCLI@2
+    displayName: Create Workspace
+    inputs:
+      connectedServiceNameARM: ServiceConnection2
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: az ml workspace create -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -l $(azureml.location) --exist-ok --yes
+  - task: AzureCLI@2
+    displayName: Create Compute Cluster
+    inputs:
+      connectedServiceNameARM: ServiceConnection2
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: 'az ml computetarget create amlcompute -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -n $(amlcompute.clusterName) -s $(amlcompute.vmSize) -p $(amlcompute.vmPriority) --min-nodes $(amlcompute.minNodes) --max-nodes $(amlcompute.maxNodes) --idle-seconds-before-scaledown $(amlcompute.idleSecondsBeforeScaledown) '
+  - task: AzureCLI@2
+    displayName: Upload Data to Datastore
+    inputs:
+      connectedServiceNameARM: ServiceConnection2
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: "az ml datastore upload -w $(azureml.workspaceName) -g $(azureml.resourceGroup) --name $(az ml datastore show-default -w $(azureml.workspaceName) -g $(azureml.resourceGroup) --query name -o tsv) --src-path data --overwrite true \n"
+  - task: Bash@3
+    displayName: Create Output Dir
+    inputs:
+      targetType: inline
+      script: >
+        mkdir metadata && mkdir models
+  - task: AzureCLI@2
+    displayName: Train Model
+    inputs:
+      connectedServiceNameARM: ServiceConnection2
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: >
+        az ml run submit-script --subscription-id $(azureml.subscription) -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -e $(experiment.name) --ct $(amlcompute.clusterName) -d training_env.yml -c azureml/trainconfig -t ../metadata/run.json train.py
+      addSpnToEnvironment: true
+      cwd: training
+  - task: AzureCLI@2
+    displayName: Register Model
+    inputs:
+      connectedServiceNameARM: ServiceConnection2
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: >
+        az ml model register -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -n $(model.name) -f metadata/run.json  --asset-path outputs -t metadata/model.json
+  - task: AzureCLI@2
+    displayName: Download Model
+    inputs:
+      connectedServiceNameARM: ServiceConnection2
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: >
+        az ml model download -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -i $(jq -r .modelId metadata/model.json) -t ./models --overwrite
+  - task: CopyFiles@2
+    displayName: 'Copy Files to: $(Build.ArtifactStagingDirectory)'
+    inputs:
+      SourceFolder: $(Build.SourcesDirectory)
+      TargetFolder: $(Build.ArtifactStagingDirectory)
+  - task: PublishPipelineArtifact@1
+    displayName: Publish Pipeline Artifact
+    inputs:
+      path: $(Build.ArtifactStagingDirectory)
+      artifactName: nusdevopsmodels
+...

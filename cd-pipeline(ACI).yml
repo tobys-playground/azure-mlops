@@ -1,0 +1,30 @@
+# Variable 'azureml.resourceGroup' was defined in the Variables tab
+# Variable 'azureml.workspaceName' was defined in the Variables tab
+# Variable 'service.name.staging' was defined in the Variables tab
+jobs:
+- job: Job
+  displayName: Agent job
+  pool:
+    vmImage: ubuntu-20.04
+steps:
+- task: UsePythonVersion@0
+  displayName: 'Use Python 3.8'
+  inputs:
+    versionSpec: 3.8
+steps:
+- task: AzureCLI@2
+  displayName: 'Add Azure ML CLI'
+  inputs:
+    azureSubscription: 
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: 'az extension add -n azure-cli-ml'
+steps:
+- task: AzureCLI@2
+  displayName: 'Deploy to ACI'
+  inputs:
+    azureSubscription: 
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+     az ml model deploy -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -n $(service.name.staging) -f ../metadata/model.json --dc aciDeploymentConfig.yml --ic inferenceConfig.yml --overwrite
