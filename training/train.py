@@ -68,12 +68,12 @@ print('Accuracy: ' + str(acc))
 run.log('Accuracy', np.float(acc))
 
 ktrain_model_name = 'mgsa-ed'
-#onnx_model_name = 'onnx_model_optimized_quantized'
 onnx_model_name = 'model_optimized_quantized.onnx'
 
 predictor.save(ktrain_model_name)
 print('MODEL SAVED')
 
+#conversion to onnx
 predictor_path = './' + ktrain_model_name
 pt_path = predictor_path+'_pt'
 pt_onnx_path = pt_path +'_onnx/model.onnx'
@@ -91,7 +91,6 @@ pt_onnx_quantized_path = quantize(optimize(Path(pt_onnx_path)))
 print(pt_onnx_quantized_path)
 
 # upload the model file explicitly into artifacts
-#run.upload_folder(name="./outputs", path= './' + model_name)
 run.upload_file(name='./outputs/' +  onnx_model_name, path_or_stream= './' + pt_onnx_quantized_path.as_posix())
 
 print("Uploaded the model {} to experiment {}".format(onnx_model_name, run.experiment.name))
