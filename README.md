@@ -12,6 +12,9 @@ This is a MLOps pipeline to train and deploy an ALBERT model on Azure (MLOps mat
 
 ## Steps (Deployment) 
 5a) The ONNX model can be deployed to Azure Container Instances as an endpoint (REST API) --usually for pre-production and testing
+
+OR
+
 5b) The ONNX model can be deployed to Azure Kubernetes Services as an endpoint (REST API) --usually for production
 
 The endpoint can now be called by a user, and the model performance will be monitored on Azure Machine Learning.
