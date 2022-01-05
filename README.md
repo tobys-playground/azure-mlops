@@ -2,10 +2,10 @@
 
 This is a MLOps pipeline to train and deploy an ALBERT model on Azure (MLOps maturity level 3).
 
-![image005 (1)](https://user-images.githubusercontent.com/81354022/147899076-8a406133-e338-47f5-b278-2aea2347a2d1.jpg)
+![image001 (3)](https://user-images.githubusercontent.com/81354022/148173706-cc22d53c-b025-471a-9048-9f04400215c2.jpg)
 
 ## Steps (Training):
-1) A code commit to the repository (either GitHub or Azure Repos) will trigger the pipeline
+1) The pipeline will be triggered by a) Azure Logic Apps which detected a change in the Blob Storage holding the data or b) a commit to the repository (either GitHub or Azure Repos)
 2) Either the Azure CLI or a Terraform script could be used to provision the resources needed (The resource group, Azure Machine Learning workspace, compute cluster)
 3) Azure Machine Learning will automatically train the ALBERT model using data in the /data folder
 4) ALBERT model will be converted into ONNX format and registered in the AML workspace
