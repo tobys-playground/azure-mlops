@@ -1,0 +1,45 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "Queue_a_new_build": {
+                "inputs": {
+                    "body": {
+                        "sourceBranch": "main"
+                    },
+                    "host": {
+                        "connection": {
+                            "referenceName": "visualstudioteamservices"
+                        }
+                    },
+                    "method": "post",
+                    "path": "/@{encodeURIComponent('MLOps-Azure')}/_apis/build/builds",
+                    "queries": {
+                        "account": "account",
+                        "buildDefId": "1"
+                    }
+                },
+                "runAfter": {},
+                "type": "ApiConnection"
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {},
+        "triggers": {
+            "When_a_blob_is_Added_or_Modified_in_Azure_Storage": {
+                "inputs": {
+                    "parameters": {
+                        "path": "blob"
+                    },
+                    "serviceProviderConfiguration": {
+                        "connectionName": "AzureBlob",
+                        "operationId": "whenABlobIsAddedOrModified",
+                        "serviceProviderId": "/serviceProviders/AzureBlob"
+                    }
+                },
+                "type": "ServiceProvider"
+            }
+        }
+    },
+    "kind": "Stateful"
+}
