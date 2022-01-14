@@ -134,5 +134,5 @@ jobs:
     displayName: Publish Pipeline Artifact
     inputs:
       path: $(Build.ArtifactStagingDirectory)
-      artifactName: nusdevopsmodels
+      artifactName: azuremlopsartifacts
 ...
